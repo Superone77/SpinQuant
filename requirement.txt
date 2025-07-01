@@ -3,3 +3,4 @@ accelerate==0.34.2
 datasets==2.20.0
 sentencepiece
 tensorboardX
+lm-eval==0.4.1

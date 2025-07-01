@@ -68,6 +68,7 @@ To obtain ExecuTorch-compatible quantized models, you can use the following scri
 * `bash scripts/32_eval_ptq_executorch.sh $model_name`
 
 We also provide an example [colab notebook](https://colab.research.google.com/gist/zxdmike/abbb2c9b0d1fd1f4ed8cdae8c02180f4) to train and export ExecuTorch compatiable Llama 3.2 models
+
 ### Note
 * If using GPTQ quantization method in Step 2 for quantizing both weight and activations, we optimize the rotation matrices with respect to a network where only activations are quantized.   
   e.g. `bash 10_optimize_rotation.sh meta-llama/Llama-2-7b 16 4 4` followed by `bash 2_eval_ptq.sh meta-llama/Llama-2-7b 4 4 4` with the `--optimized_rotation_path` pointing to the rotation optimized for W16A4KV4.
