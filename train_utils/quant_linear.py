@@ -8,6 +8,7 @@
 import torch
 import torch.nn as nn
 from torch._tensor import Tensor
+import os
 
 
 class QuantizeLinear(nn.Linear):
@@ -50,7 +51,8 @@ class QuantizeLinear(nn.Linear):
             weight = self.weight
         if hasattr(self, "quantizer"):
             dtype = weight.dtype
-            self.quantizer.find_params(weight.data)
+            if not (os.getenv("USE_NVFP4", "0") == "1" and self.quantizer.bits == 4):
+                self.quantizer.find_params(weight.data)
             weight = self.quantizer.quantize(weight).to(dtype)
 
         return nn.functional.linear(input, weight, self.bias)
