@@ -88,6 +88,10 @@ We also provide an example [colab notebook](https://colab.research.google.com/gi
 - `--rotate`: Whether we want to rotate the model
 - `--optimized_rotation_path`: The checkpoint path of optimized rotation; Use random rotation if path is not given
 
+### NVFP4 Quantization
+
+Set the environment variable `USE_NVFP4=1` to enable NVFP4 quantization for activations and weights. Leave it unset to use the original quantization format.
+
  
 ## Quantized Models
  | Model | LLaMA-3 8B | | LLaMA-3 70B | | LLaMA-2 7B | | LLaMA-2 13B | | LLaMA-2 70B | | 
