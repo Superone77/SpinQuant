@@ -21,7 +21,7 @@ from utils.convert_to_executorch import (
 
 def ptq_model(args, model, model_args=None):
     transformers.set_seed(args.seed)
-    model.eval()
+    # model.eval()
 
     # Rotate the weights
     if args.rotate:
@@ -42,7 +42,7 @@ def ptq_model(args, model, model_args=None):
         quant_utils.add_actquant(
             model
         )  # Add Activation Wrapper to the model as the rest of the code assumes it is present
-
+    print("weight quant")
     if args.w_bits < 16:
         save_dict = {}
         if args.load_qmodel_path:  # Load Quantized Rotated Model
@@ -89,6 +89,7 @@ def ptq_model(args, model, model_args=None):
             torch.save(save_dict, args.save_qmodel_path)
 
     # Add Input Quantization
+    print("act quant")
     if args.a_bits < 16 or args.v_bits < 16:
         qlayers = quant_utils.find_qlayers(model, layers=[quant_utils.ActQuantWrapper])
         down_proj_groupsize = -1

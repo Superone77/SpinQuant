@@ -17,6 +17,7 @@ import time
 import torch
 import torch.nn as nn
 import tqdm
+import os
 
 from utils import quant_utils, utils
 
@@ -348,14 +349,16 @@ def rtn_fwrd(model, dev, args, custom_layers=None):
                 weight_groupsize=w_groupsize,
             )
             W = subset[name].weight.data
-            quantizer.find_params(W)
+            
+            if not(os.getenv("USE_NVFP4", "0") == "1" and args.w_bits == 4):
+                quantizer.find_params(W)
             q, int_weight, scale = quantizer.fake_quantize(W)
             subset[name].weight.data = q.to(next(iter(layer.parameters())).dtype)
             if args.export_to_et:
                 subset[name].register_buffer("int_weight", int_weight)
                 subset[name].register_buffer("scale", scale)
-            quantizers["model.layers.%d.%s" % (i, name)] = quantizer.cpu()
-        layers[i] = layer.cpu()
+            quantizers["model.layers.%d.%s" % (i, name)] = quantizer#.cpu()
+        layers[i] = layer#.cpu()
         torch.cuda.empty_cache()
         del layer
 

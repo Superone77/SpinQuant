@@ -57,7 +57,7 @@ def rotate_embeddings(model, R1: torch.Tensor) -> None:
     for W in [model.model.embed_tokens]:
         dtype = W.weight.data.dtype
         W_ = W.weight.data.to(device="cuda", dtype=torch.float64)
-        W.weight.data = torch.matmul(W_, R1).to(device="cpu", dtype=dtype)
+        W.weight.data = torch.matmul(W_, R1).to(device="cuda", dtype=dtype)
 
 
 def rotate_attention_inputs(layer, R1) -> None:
@@ -65,7 +65,7 @@ def rotate_attention_inputs(layer, R1) -> None:
     for W in [layer.self_attn.q_proj, layer.self_attn.k_proj, layer.self_attn.v_proj]:
         dtype = W.weight.dtype
         W_ = W.weight.to(device="cuda", dtype=torch.float64)
-        W.weight.data = torch.matmul(W_, R1).to(device="cpu", dtype=dtype)
+        W.weight.data = torch.matmul(W_, R1).to(device="cuda", dtype=dtype)
 
 
 def rotate_attention_output(layer, R1) -> None:
@@ -74,10 +74,10 @@ def rotate_attention_output(layer, R1) -> None:
 
     dtype = W.weight.data.dtype
     W_ = W.weight.data.to(device="cuda", dtype=torch.float64)
-    W.weight.data = torch.matmul(R1.T, W_).to(device="cpu", dtype=dtype)
+    W.weight.data = torch.matmul(R1.T, W_).to(device="cuda", dtype=dtype)
     if W.bias is not None:
         b = W.bias.data.to(device="cuda", dtype=torch.float64)
-        W.bias.data = torch.matmul(R1.T, b).to(device="cpu", dtype=dtype)
+        W.bias.data = torch.matmul(R1.T, b).to(device="cuda", dtype=dtype)
 
 
 def rotate_mlp_input(layer, R1):
@@ -86,7 +86,7 @@ def rotate_mlp_input(layer, R1):
     for W in mlp_inputs:
         dtype = W.weight.dtype
         W_ = W.weight.data.to(device="cuda", dtype=torch.float64)
-        W.weight.data = torch.matmul(W_, R1).to(device="cpu", dtype=dtype)
+        W.weight.data = torch.matmul(W_, R1).to(device="cuda", dtype=dtype)
 
 
 def rotate_mlp_output(layer, R1):
@@ -94,13 +94,13 @@ def rotate_mlp_output(layer, R1):
     W = layer.mlp.down_proj
     dtype = W.weight.data.dtype
     W_ = W.weight.data.to(device="cuda", dtype=torch.float64)
-    W.weight.data = torch.matmul(R1.T, W_).to(device="cpu", dtype=dtype)
+    W.weight.data = torch.matmul(R1.T, W_).to(device="cuda", dtype=dtype)
     apply_exact_had_to_linear(
         W, had_dim=-1, output=False
     )  # apply exact (inverse) hadamard on the weights of mlp output
     if W.bias is not None:
         b = W.bias.data.to(device="cuda", dtype=torch.float64)
-        W.bias.data = torch.matmul(R1.T, b).to(device="cpu", dtype=dtype)
+        W.bias.data = torch.matmul(R1.T, b).to(device="cuda", dtype=dtype)
 
 
 def rotate_head(model, R1: torch.Tensor) -> None:
@@ -108,7 +108,7 @@ def rotate_head(model, R1: torch.Tensor) -> None:
     W = model.lm_head
     dtype = W.weight.data.dtype
     W_ = W.weight.data.to(device="cuda", dtype=torch.float64)
-    W.weight.data = torch.matmul(W_, R1).to(device="cpu", dtype=dtype)
+    W.weight.data = torch.matmul(W_, R1).to(device="cuda", dtype=dtype)
 
 
 def rotate_ov_proj(layer, head_num, head_dim, R2=None):

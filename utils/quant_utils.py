@@ -17,8 +17,10 @@ import transformers
 from train_utils.quant_linear import QuantizeLinear
 from utils import hadamard_utils
 from utils.utils import HadamardTransform
+from .nvfp4_triton import nvfp4_forward   
 
-FP8_E4M3_MAX = 240.0
+
+FP8_E4M3_MAX = 448.0
 
 
 def fp4_121_positive(x: torch.Tensor, stochastic_rounding: bool = False) -> torch.Tensor:
@@ -44,6 +46,11 @@ def quant_nvfp4(
     batch_size: int = 1,
     vari_length: bool = False,
 ) -> torch.Tensor:
+    quant_mode = os.environ.get("QUANT_MODE", "")
+    # print("quant_nvfp4")
+    if quant_mode == "Dynamic_Double" and x.is_cuda: 
+        x = nvfp4_forward(x, None, stochastic_rounding)
+        return x
     fp4_121_max = 6.0
     ori_shape = x.shape
     x = x.reshape(-1, 16)
@@ -74,6 +81,7 @@ def quant_nvfp4(
 
 
 def get_minq_maxq(bits, sym):
+    print("get_minq_maxq")
     if sym:
         maxq = torch.tensor(2 ** (bits - 1) - 1)
         minq = -maxq - 1
@@ -85,6 +93,7 @@ def get_minq_maxq(bits, sym):
 
 
 def asym_quant(x, scale, zero, maxq):
+    print("asym_quant")
     scale = scale.to(x.device)
     zero = zero.to(x.device)
     q = torch.clamp(torch.round(x / scale) + zero, 0, maxq)
@@ -92,24 +101,29 @@ def asym_quant(x, scale, zero, maxq):
 
 
 def asym_dequant(q, scale, zero):
+    print("asym_dequant")
     return scale * (q - zero)
 
 
 def asym_quant_dequant(x, scale, zero, maxq):
+    print("asym_quant_dequant")
     return asym_dequant(*asym_quant(x, scale, zero, maxq))
 
 
 def sym_quant(x, scale, maxq):
+    print("sym_quant")
     scale = scale.to(x.device)
     q = torch.clamp(torch.round(x / scale), -(maxq + 1), maxq)
     return q, scale
 
 
 def sym_dequant(q, scale):
+    print("sym_dequant")
     return scale * q
 
 
 def sym_quant_dequant(x, scale, maxq):
+    print("sym_quant_dequant")
     return sym_dequant(*sym_quant(x, scale, maxq))
 
 
@@ -178,7 +192,10 @@ class ActQuantizer(torch.nn.Module):
     def configure(
         self, bits: int, groupsize: int = -1, sym: bool = False, clip_ratio: float = 1.0
     ) -> None:
-        _, self.maxq = get_minq_maxq(bits, sym)
+        if not (os.getenv("USE_NVFP4", "0") == "1" and bits == 4):
+            _, self.maxq = get_minq_maxq(bits, sym)
+        else:
+            self.max_q = 0
         self.bits = bits
         self.groupsize = groupsize
         self.sym = sym

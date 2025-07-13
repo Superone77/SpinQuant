@@ -60,6 +60,12 @@ def parser_gen():
                         out-projection. Note that this does not apply rotation to the K/Q and they will be rotated
                         if we want to quantize the Keys""",
     )
+    # Rotation Arguments
+    parser.add_argument(
+        "--groupnorm",
+        action=argparse.BooleanOptionalAction,
+        default=False
+    )
     parser.add_argument(
         "--rotate_mode", type=str, default="hadamard", choices=["hadamard", "random"]
     )
